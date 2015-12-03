@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html lang="en" ng-app="app" class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html lang="en" ng-app="app" class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html lang="en" ng-app="app" class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html lang="en" ng-app="app" class="no-js"> <!--<![endif]-->
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>My AngularJS App</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="bower_components/html5-boilerplate/dist/css/normalize.css">
+    <link rel="stylesheet" href="bower_components/html5-boilerplate/dist/css/main.css">
+
+    <script src="bower_components/html5-boilerplate/dist/js/vendor/modernizr-2.8.3.min.js"></script>
+
+    <link rel="stylesheet" href="bower_components/angular-material/angular-material.css">
+    <link rel="stylesheet" href="bower_components/mdi/css/materialdesignicons.css">
+</head>
+<body>
+<div ng-controller="SoundPlayerController">
+
+    <header>
+        <h1>Drummar workbench</h1>
+    </header>
+    <sound-visualization analyser="analyser"></sound-visualization>
+    <array-visualization data="soundAnalyser.localMaximums"></array-visualization>
+    <array-visualization data="soundAnalyser.peaks"></array-visualization>
+   <!-- <array-visualization data="soundAnalyser.onsets"></array-visualization>-->
+    <!--
+    <bands-visualization bands="soundAnalyser.bands"></bands-visualization>--><!--
+    <array-visualization data="soundAnalyser.hfcData"></array-visualization>
+    <array-visualization data="soundAnalyser.postProcessedData"></array-visualization>-->
+
+    <md-content layout-padding>
+        <div layout="row">
+            <md-input-container>
+                <md-select aria-label="select track" ng-model="track">
+                    <md-option ng-value="item" ng-repeat="item in tracks">{{item}}</md-option>
+                </md-select>
+            </md-input-container>
+            <md-input-container>
+
+                <!--
+                <md-button class="md-fab md-primary" aria-label="play/stop" ng-click="playing ? stop() : play()">
+                    <md-icon ng-show="!playing"  md-font-icon="mdi mdi-play" ng-style="{'font-size': '40px', height: '40px'}"></md-icon>
+                    <md-icon ng-show="playing" md-font-icon="mdi mdi-pause" ng-style="{'font-size': '40px', height: '40px'}"></md-icon>
+                </md-button>-->
+            </md-input-container>
+        </div>
+        <div layout="row">
+            <md-input-container>
+                <md-checkbox ng-model="microphoneOn" aria-label="Microphone On">Microphone On</md-checkbox>
+            </md-input-container>
+        </div>
+    </md-content>
+</div>
+
+<script src="bower_components/angular/angular.min.js"></script>
+<script src="bower_components/angular-aria/angular-aria.js"></script>
+<script src="bower_components/angular-animate/angular-animate.js"></script>
+<script src="bower_components/angular-material/angular-material.js"></script>
+<script src="bower_components/teoria/teoria.js"></script>
+<script src="bower_components/underscore/underscore.js"></script>
+<script src="bower_components/mathjs/dist/math.js"></script>
+<script src="bower_components/dsp.js/dsp.js"></script>
+<script src="node_modules/midifile/dist/MIDIFile.js"></script>
+
+<!-- Below is your custom application script -->
+<script src="ng-app/app.js"></script>
+<script src="ng-app/sound.js"></script>
+<script src="ng-app/SoundPlayerController.js"></script>
+<script src="ng-app/soundService.js"></script>
+<script src="ng-app/soundVisualizationDirective.js"></script>
+<script src="ng-app/midiParser.js"></script>
+
+</body>
+</html>
