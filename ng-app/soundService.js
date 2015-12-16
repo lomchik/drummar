@@ -198,18 +198,25 @@ angular.module('sound')
         var prevEvent;
         var hannBandsCompressedEnergy = generateHannBandsCompressedEnergy();
         var prevTopBand;
-
+        var prevFreq;
+        var prevPrevFreq;
         var drumDetection = function(event) {
 
             var freq = new Uint8Array(analyser.frequencyBinCount);
             analyser.getByteFrequencyData(freq);
-            var bands = onsetDetection.separateFreqData(freq, separators);
-            var bandsEnergy = _.map(bands, onsetDetection.triangularWindow);
-            var compressedBandsEnergy = _.map(bandsEnergy, onsetDetection.muLawCompression);
+            freq = Array.prototype.slice.call(freq);
+            //freq = freq.slice(0, 20);
+
+            var tfreq = _(freq).map(function(val, i) {
+                return i * val * val;
+            });
+            //var bands = onsetDetection.separateFreqData(tfreq, separators);
+            //var bandsEnergy = _.map(bands, onsetDetection.triangularWindow);
+            var compressedBandsEnergy = _.map(tfreq, onsetDetection.muLawCompression);
             var hannSmoothedBandsEnergy = _.map(compressedBandsEnergy, function(value, i) {
                 return value * hannBandsCompressedEnergy[i];
             });
-            var differentiatedBandsEnergy = _.map(hannSmoothedBandsEnergy, function(value, i) {
+            var differentiatedBandsEnergy = _.map(compressedBandsEnergy, function(value, i) {
                 return value - (prevCompressedBandsEnergy[i] || 0);
             });
             var halfWaveDerivative = onsetDetection.halfWaveRectify(differentiatedBandsEnergy);
@@ -223,9 +230,9 @@ angular.module('sound')
                     var value = self.peaks[length - 2];
                     if (//self.peaks[length - 3] <= self.peaks[length-4] || self.peaks[length - 4] <= self.peaks[length-5]){
                     //value >= 0.95 * Math.max.apply(null, self.peaks) ){
-                    value >= 0.8 *  Math.max.apply(null, self.peaks)) /*&&
+                    value >= 0.5 *  Math.max.apply(null, self.peaks)) /*&&
                     (!self.onsets.length || value >= dynamicThreshold(self.peaks.slice( -thresholdWindow - 1, -1))) )*/ {
-                        prevOnset = {playTime: prevEvent.playbackTime*1000, topBand: prevTopBand};
+                        prevOnset = {playTime: prevEvent.playbackTime*1000, topBand: prevTopBand, freq: prevFreq, prevFreq: prevPrevFreq};
                         self.onsets.push(prevOnset);
                         self.localMaximums.push(2);
                     }
@@ -238,6 +245,8 @@ angular.module('sound')
                 }
             }
             prevEvent = event;
+            prevPrevFreq = prevFreq;
+            prevFreq = freq;
             prevTopBand = freq.indexOf(Math.max.apply(null, freq));
         };
 

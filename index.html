@@ -26,6 +26,11 @@
     <sound-visualization analyser="analyser"></sound-visualization>
     <array-visualization data="soundAnalyser.localMaximums"></array-visualization>
     <array-visualization data="soundAnalyser.peaks"></array-visualization>
+    <div ng-repeat="onset in onsets">
+        <array-visualization  data="onset.freq"></array-visualization>
+        max freq: {{onset.topBand}} <br>
+        {{onset.freq}}
+    </div>
    <!-- <array-visualization data="soundAnalyser.onsets"></array-visualization>-->
     <!--
     <bands-visualization bands="soundAnalyser.bands"></bands-visualization>--><!--

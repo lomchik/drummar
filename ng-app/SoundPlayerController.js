@@ -13,7 +13,11 @@ angular.module('sound').controller('SoundPlayerController', function($scope, dru
         'media/ipad-air-oneshot-middletom.ogg',
         'media/ipad-air-oneshot-crash.ogg',
         'media/ipad-air-oneshot-snare.ogg',
-        'media/ipad-air-oneshot-bassdrum.ogg'
+        'media/ipad-air-oneshot-bassdrum.ogg',
+        'media/ipad-air-one-crash.ogg',
+        'media/ipad-air-one-snare.ogg',
+        'media/ipad-air-one-bassdrum.ogg',
+        'media/ipad-air-one-hihat.ogg'
     ];
     $scope.midiTracks = [
         'media/Test Rock Drum Fills.mid.midi',
@@ -116,9 +120,12 @@ angular.module('sound').controller('SoundPlayerController', function($scope, dru
                 /*$http.post('http://127.0.0.1:3000/test-onsets', JSON.stringify({founded: soundAnalyser.onsets, midi: $scope.midiTrack.replace('media/', '')})).then(function(result) {
                     console.log(result.data);
                 });*/
-
+                $scope.onsets = soundAnalyser.onsets;
+                console.log($scope.onsets);
+                $scope.$digest();
                 var results = compareTimings(prepareTiming(soundAnalyser.onsets), prepareTiming($scope.midiOnsets));
-                var groupedByPitch = {};
+                console.log(results);
+                /*var groupedByPitch = {};
                 _(results.onsets).each(function(value) {
                     console.log(value.playTime, value.pitch, value.detected && value.detected.topBand);
                     groupedByPitch[value.pitch] = groupedByPitch[value.pitch] || {};
@@ -126,7 +133,7 @@ angular.module('sound').controller('SoundPlayerController', function($scope, dru
                     groupedByPitch[value.pitch][value.detected.topBand]++;
                 });
                 console.log(groupedByPitch);
-            };
+*/            };
         });
     });
     $scope.$watch('source', function(newValue) {
