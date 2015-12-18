@@ -16,51 +16,43 @@
 
     <link rel="stylesheet" href="bower_components/angular-material/angular-material.css">
     <link rel="stylesheet" href="bower_components/mdi/css/materialdesignicons.css">
+    <link rel="stylesheet" href="styles/app.css">
+
 </head>
 <body>
 <div ng-controller="SoundPlayerController">
-
-    <header>
-        <h1>Drummar workbench</h1>
-    </header>
+    <section layout="row" layout-align="left center" layout-wrap>
+        <md-select class="no-margin" aria-label="select track" ng-model="track" layout-wrap>
+            <md-option ng-value="item" ng-repeat="item in tracks">{{item}}</md-option>
+        </md-select>
+        <md-checkbox ng-model="microphoneOn" aria-label="Microphone On">Microphone On</md-checkbox>
+        <!--<md-input-container>
+        <md-button class="md-fab md-primary" aria-label="play/stop" ng-click="playing ? stop() : play()">
+            <md-icon ng-show="!playing"  md-font-icon="mdi mdi-play" ng-style="{'font-size': '40px', height: '40px'}"></md-icon>
+            <md-icon ng-show="playing" md-font-icon="mdi mdi-pause" ng-style="{'font-size': '40px', height: '40px'}"></md-icon>
+        </md-button>
+    </md-input-container>-->
+    </section>
     <sound-visualization analyser="analyser"></sound-visualization>
     <array-visualization data="soundAnalyser.localMaximums"></array-visualization>
     <array-visualization data="soundAnalyser.peaks"></array-visualization>
     <div ng-repeat="onset in onsets">
+        <md-checkbox ng-model="onset.selected">{{$index+1}} max freq: {{onset.topBand}}</md-checkbox>
         <array-visualization  data="onset.freq"></array-visualization>
-        max freq: {{onset.topBand}} <br>
-        {{onset.freq}}
     </div>
-   <!-- <array-visualization data="soundAnalyser.onsets"></array-visualization>-->
-    <!--
-    <bands-visualization bands="soundAnalyser.bands"></bands-visualization>--><!--
-    <array-visualization data="soundAnalyser.hfcData"></array-visualization>
-    <array-visualization data="soundAnalyser.postProcessedData"></array-visualization>-->
 
-    <md-content layout-padding>
-        <div layout="row">
-            <md-input-container>
-                <md-select aria-label="select track" ng-model="track">
-                    <md-option ng-value="item" ng-repeat="item in tracks">{{item}}</md-option>
-                </md-select>
-            </md-input-container>
-            <md-input-container>
+    <section layout="row" layout-sm="column" layout-align="left center" layout-wrap>
+        <md-select aria-label="select drum type" ng-model="drumType">
+            <md-option ng-value="drum" ng-repeat="drum in drumTypes">{{drum}}</md-option>
+        </md-select>
 
-                <!--
-                <md-button class="md-fab md-primary" aria-label="play/stop" ng-click="playing ? stop() : play()">
-                    <md-icon ng-show="!playing"  md-font-icon="mdi mdi-play" ng-style="{'font-size': '40px', height: '40px'}"></md-icon>
-                    <md-icon ng-show="playing" md-font-icon="mdi mdi-pause" ng-style="{'font-size': '40px', height: '40px'}"></md-icon>
-                </md-button>-->
-            </md-input-container>
-        </div>
-        <div layout="row">
-            <md-input-container>
-                <md-checkbox ng-model="microphoneOn" aria-label="Microphone On">Microphone On</md-checkbox>
-            </md-input-container>
-        </div>
-    </md-content>
+        <md-button class="md-raised md-primary" ng-click="learn()">Learn</md-button>
+        <md-button class="md-raised md-primary" ng-click="downloadData()">Download data</md-button>
+        <md-button class="md-raised md-primary" ng-click="save()">save data</md-button>
+    </section>
 </div>
 
+<!-- Below is library scripts -->
 <script src="bower_components/angular/angular.min.js"></script>
 <script src="bower_components/angular-aria/angular-aria.js"></script>
 <script src="bower_components/angular-animate/angular-animate.js"></script>
@@ -71,13 +63,19 @@
 <script src="bower_components/dsp.js/dsp.js"></script>
 <script src="node_modules/midifile/dist/MIDIFile.js"></script>
 
-<!-- Below is your custom application script -->
+
+<!-- Below is your custom library scripts -->
+<script src="js/hmm.js"></script>
+
+<!-- Below is your custom application scripts -->
 <script src="ng-app/app.js"></script>
 <script src="ng-app/sound.js"></script>
 <script src="ng-app/SoundPlayerController.js"></script>
 <script src="ng-app/soundService.js"></script>
+<script src="ng-app/myOnsetDetector.js"></script>
 <script src="ng-app/soundVisualizationDirective.js"></script>
 <script src="ng-app/midiParser.js"></script>
+<script src="ng-app/soundDrumDetector.js"></script>
 
 </body>
 </html>

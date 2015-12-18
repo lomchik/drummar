@@ -113,7 +113,7 @@ angular.module('sound').directive('soundVisualization', function() {
                 data: '='
             },
             replace: true,
-            template: '<canvas width="640" height="100" style="width:100%"></canvas>',
+            template: '<canvas width="640" height="80" style="width:100%"></canvas>',
             link: function(scope, element, attrs) {
                 var canvas = element[0],
                     canvasCtx = canvas.getContext("2d"),
@@ -135,7 +135,7 @@ angular.module('sound').directive('soundVisualization', function() {
                             canvasCtx.fillStyle = 'rgb(0, 0, 0)';
                             canvasCtx.fillRect(0, 0, WIDTH, HEIGHT);
                             canvasCtx.fillStyle = 'white';
-                            canvasCtx.fillText('max: ' + maxValue, 10, 10)
+                            canvasCtx.fillText('max: ' + maxValue.toFixed(5), 10, 10)
                             var barHeight;
                             var x = 0;
 

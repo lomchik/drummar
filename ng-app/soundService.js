@@ -31,16 +31,19 @@ angular.module('sound')
             }
         });
     })
-    .factory('onsetDetection', function(audioCtx) {
+    .factory('detectorHelpers', function(audioCtx) {
         var barkScale = [0, 20, 100, 200, 300, 400, 510, 630, 770, 920, 1080, 1270, 1480, 1720, 2000, 2320, 2700, 3150, 3700, 4400, 5300, 6400, 7700, 9500, 12000, 15500],
-        freq2Bark = function(freq) {
-            return 8.96 * Math.log(0.978 + 5 * Math.log(0.994 + Math.pow((freq + 75.4)/2173, 1.347)));
-        };
-        return {
+            freq2Bark = function(freq) {
+                return 8.96 * Math.log(0.978 + 5 * Math.log(0.994 + Math.pow((freq + 75.4)/2173, 1.347)));
+            },
+            melScale = [40, 161, 200, 404, 693, 867, 1000, 2022, 3000, 3393, 4109, 5526, 7743, 12000];
+
+        var self = {
             barkScale: barkScale,
+            melScale: melScale,
             separate: function(fftSize, scale) {
                 var dividers = [], prevValue = -1, value;
-                for (var i = 0; i < fftSize; i++) {
+                for (var i = 0; i < fftSize/2; i++) {
                     var freq = i * audioCtx.sampleRate/fftSize;
                     for (var j = 0; j< scale.length - 1 ; j++) {
                         if (freq > scale[j] && freq <= scale[j+1]) {
@@ -123,10 +126,37 @@ angular.module('sound')
 
                 if (upper >= arr.length) return arr[lower];
                 return arr[lower] * (1 - weight) + arr[upper] * weight;
+            },
+            battenbergDynamicThreshold: function(array) {
+                var t1 = 1.5 * (percentile(array, 0.75) - percentile(array, 0.25)) + percentile(array, 0.5) + 0.05;
+                var t2 = 0.1 * percentile(array, 1);
+                var p = 2;
+
+                return Math.pow( ( Math.pow(t1, p) + Math.pow(t2, p) ) / 2, 1/p);
+            },
+            generateHannBandsCompressedEnergy: function() {
+                var hannSignal = [];
+                for (var i = 0; i < fftSize; i++ ) {
+                    hannSignal.push(WindowFunction.Hann(fftSize, i));
+                }
+                var fft = new FFT(fftSize, audioCtx.sampleRate);
+                fft.forward(hannSignal);
+                var hannSpectrum = fft.spectrum;
+                var bands = detectorHelpers.separateFreqData(hannSpectrum, separators);
+                var bandsEnergy = _.map(bands, detectorHelpers.triangularWindow);
+                var compressedBandsEnergy = _.map(bandsEnergy, detectorHelpers.muLawCompression);
+
+                return compressedBandsEnergy;
+            },
+            freqToMel: function(freq) {
+
+                return mel;
             }
         };
+
+        return self;
     })
-.factory('drumDetectionBattenberg', function(audioCtx, $rootScope, onsetDetection) {
+    .factory('drumDetectionBattenberg', function(audioCtx, $rootScope, detectorHelpers) {
         var fftSize = 2048;
         var $scope = $rootScope.$new();
         var distortion = audioCtx.createWaveShaper();
@@ -169,37 +199,13 @@ angular.module('sound')
             }
         };
         self.reset();
-        var separators = onsetDetection.separate(fftSize, onsetDetection.barkScale);
+        var separators = detectorHelpers.separate(fftSize, detectorHelpers.barkScale);
         var prevCompressedBandsEnergy = [];
-        var percentile =  onsetDetection.percentile;
-        var dynamicThreshold = function(array) {
-            var t1 = 1.5 * (percentile(array, 0.75) - percentile(array, 0.25)) + percentile(array, 0.5) + 0.05;
-            var t2 = 0.1 * percentile(array, 1);
-            var p = 2;
-
-            return Math.pow( ( Math.pow(t1, p) + Math.pow(t2, p) ) / 2, 1/p);
-        };
-
-        var generateHannBandsCompressedEnergy = function() {
-            var hannSignal = [];
-            for (var i = 0; i < fftSize; i++ ) {
-                hannSignal.push(WindowFunction.Hann(fftSize, i));
-            }
-            var fft = new FFT(fftSize, audioCtx.sampleRate);
-            fft.forward(hannSignal);
-            var hannSpectrum = fft.spectrum;
-            var bands = onsetDetection.separateFreqData(hannSpectrum, separators);
-            var bandsEnergy = _.map(bands, onsetDetection.triangularWindow);
-            var compressedBandsEnergy = _.map(bandsEnergy, onsetDetection.muLawCompression);
-
-            return compressedBandsEnergy;
-        };
-
         var prevEvent;
-        var hannBandsCompressedEnergy = generateHannBandsCompressedEnergy();
         var prevTopBand;
         var prevFreq;
         var prevPrevFreq;
+
         var drumDetection = function(event) {
 
             var freq = new Uint8Array(analyser.frequencyBinCount);
@@ -210,27 +216,27 @@ angular.module('sound')
             var tfreq = _(freq).map(function(val, i) {
                 return i * val * val;
             });
-            //var bands = onsetDetection.separateFreqData(tfreq, separators);
-            //var bandsEnergy = _.map(bands, onsetDetection.triangularWindow);
-            var compressedBandsEnergy = _.map(tfreq, onsetDetection.muLawCompression);
-            var hannSmoothedBandsEnergy = _.map(compressedBandsEnergy, function(value, i) {
+            //var bands = detectorHelpers.separateFreqData(tfreq, separators);
+            //var bandsEnergy = _.map(bands, detectorHelpers.triangularWindow);
+            var compressedBandsEnergy = _.map(tfreq, detectorHelpers.muLawCompression);
+            /*var hannSmoothedBandsEnergy = _.map(compressedBandsEnergy, function(value, i) {
                 return value * hannBandsCompressedEnergy[i];
-            });
+            });*/
             var differentiatedBandsEnergy = _.map(compressedBandsEnergy, function(value, i) {
                 return value - (prevCompressedBandsEnergy[i] || 0);
             });
-            var halfWaveDerivative = onsetDetection.halfWaveRectify(differentiatedBandsEnergy);
+            var halfWaveDerivative = detectorHelpers.halfWaveRectify(differentiatedBandsEnergy);
             var meanDz = math.mean(halfWaveDerivative);
 
             self.peaks.push(meanDz);
             var length = self.peaks.length;
             var prevOnset;
             if (length > 3) {
-                if (prevEvent && onsetDetection.isPeak(self.peaks, length - 2)) {
+                if (prevEvent && detectorHelpers.isPeak(self.peaks, length - 2)) {
                     var value = self.peaks[length - 2];
                     if (//self.peaks[length - 3] <= self.peaks[length-4] || self.peaks[length - 4] <= self.peaks[length-5]){
                     //value >= 0.95 * Math.max.apply(null, self.peaks) ){
-                    value >= 0.5 *  Math.max.apply(null, self.peaks)) /*&&
+                    value >= 0.6) /*&&
                     (!self.onsets.length || value >= dynamicThreshold(self.peaks.slice( -thresholdWindow - 1, -1))) )*/ {
                         prevOnset = {playTime: prevEvent.playbackTime*1000, topBand: prevTopBand, freq: prevFreq, prevFreq: prevPrevFreq};
                         self.onsets.push(prevOnset);
