@@ -9,6 +9,11 @@ angular.module('sound')
 
         return audioCtx;
     })
+    .factory('offlineAudioCtx', function() {
+        var audioCtx = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(1,40*44100,44100);
+
+        return audioCtx;
+    })
     .factory('audioInput', function($q, audioCtx) {
         return $q(function(resolve, reject) {
             if (navigator.getUserMedia) {
@@ -31,16 +36,14 @@ angular.module('sound')
             }
         });
     })
-    .factory('detectorHelpers', function(audioCtx) {
+    .factory('dspHelpers', function(audioCtx) {
         var barkScale = [0, 20, 100, 200, 300, 400, 510, 630, 770, 920, 1080, 1270, 1480, 1720, 2000, 2320, 2700, 3150, 3700, 4400, 5300, 6400, 7700, 9500, 12000, 15500],
             freq2Bark = function(freq) {
                 return 8.96 * Math.log(0.978 + 5 * Math.log(0.994 + Math.pow((freq + 75.4)/2173, 1.347)));
-            },
-            melScale = [40, 161, 200, 404, 693, 867, 1000, 2022, 3000, 3393, 4109, 5526, 7743, 12000];
+            };
 
         var self = {
             barkScale: barkScale,
-            melScale: melScale,
             separate: function(fftSize, scale) {
                 var dividers = [], prevValue = -1, value;
                 for (var i = 0; i < fftSize/2; i++) {
@@ -61,6 +64,9 @@ angular.module('sound')
             freqToBin: function(freq, fftSize) {
                 return Math.floor(freq * fftSize / audioCtx.sampleRate);
             },
+            binToFreq: function(bin, fftSize) {
+                return bin * audioCtx.sampleRate / (fftSize/2);
+            },
             separateFreqData: function(data, separator) {
                 var parts = [];
                 for (var i = 0, l = separator.length; i < l; i++) {
@@ -69,13 +75,13 @@ angular.module('sound')
 
                 return parts;
             },
-            triangularWindow: function(array) {
-                var sum = 0, length = array.length, middle = length / 2;
-                for (var i = -middle, k = 0; Math.abs(i) <= middle && k < length; i++, k++) {
-                    sum += ( -2 * Math.abs(i) / (length + 2) + 1) * array[k];
+            triangularWindow: function(length) {
+                var middle = (length-1)/ 2, array = [];
+                for (var i = 0; i < length; i++) {
+                    array.push( -1/middle * Math.abs(i-middle) + 1 );
                 }
 
-                return sum / length;
+                return array;
             },
             hfc: function(array) {
                 var sum = 0;
@@ -87,7 +93,7 @@ angular.module('sound')
             },
             isPeak: function(array, index) {
                 var val = array[index];
-                return val > array[index-1] && val > array[index+1] && val > array[index-2];
+                return (    val > array[index-1] || (val == array[index-1] && val >=array[index-2]))  && val > array[index+1];
             },
             firFilter: function(array, m, a) {
                 var l = array.length,
@@ -111,6 +117,13 @@ angular.module('sound')
             halfWaveRectify: function(array)  {
                 return _(array).map(function(value) {
                     return value < 0 ? 0 : value;
+                });
+            },
+            applyWindow: function(windowFunc, array) {
+                var window = windowFunc(array.length);
+
+                return _.map(window, function(val, i) {
+                    return val * array[i];
                 });
             },
             percentile: function(arr, p) {
@@ -142,118 +155,74 @@ angular.module('sound')
                 var fft = new FFT(fftSize, audioCtx.sampleRate);
                 fft.forward(hannSignal);
                 var hannSpectrum = fft.spectrum;
-                var bands = detectorHelpers.separateFreqData(hannSpectrum, separators);
-                var bandsEnergy = _.map(bands, detectorHelpers.triangularWindow);
-                var compressedBandsEnergy = _.map(bandsEnergy, detectorHelpers.muLawCompression);
+                var bands = dspHelpers.separateFreqData(hannSpectrum, separators);
+                var bandsEnergy = _.chain(bands).map(detectorHelpers.applyWindow.bind(null, detectorHelpers.triangularWindow)).map(math.sum).value();
+                var compressedBandsEnergy = _.map(bandsEnergy, dspHelpers.muLawCompression);
 
                 return compressedBandsEnergy;
             },
-            freqToMel: function(freq) {
+            DCT2: function(arr) {
+                var result = [];
+                for (var n = 0, M = arr.length; n < M; n++) {
+                    result[n] = 2*math.sum(_.map(arr, function(val, m) {
+                        return val * math.cos(math.pi * n * (m + 0.5) / M)
+                    }));
+                }
 
-                return mel;
-            }
-        };
-
-        return self;
-    })
-    .factory('drumDetectionBattenberg', function(audioCtx, $rootScope, detectorHelpers) {
-        var fftSize = 2048;
-        var $scope = $rootScope.$new();
-        var distortion = audioCtx.createWaveShaper();
-        var gainNode = audioCtx.createGain();
-        var biquadFilter = audioCtx.createBiquadFilter();
-        var convolver = audioCtx.createConvolver();
-        var analyser = audioCtx.createAnalyser();
-        var processor = audioCtx.createScriptProcessor(fftSize, 1, 1);
-        var thresholdWindow = 7;//7
-        analyser.minDecibels = -90;
-        analyser.maxDecibels = 0;
-        analyser.smoothingTimeConstant = 0.25;
-        analyser.fftSize = fftSize;
-
-        analyser.connect(distortion);
-        distortion.connect(biquadFilter);
-        biquadFilter.connect(convolver);
-        convolver.connect(gainNode);
-        gainNode.connect(processor);
-        processor.connect(audioCtx.destination);
-
-
-        var self = {
-            initRecordFingerPrint: function() {
-                processor.onaudioprocess = drumDetection;
+                return result
             },
-            onsets: [],
-            localMaximums: [],
-            bands: [],
-            peaks: [],
-            analyzer: analyser,
-            scope: $scope,
-            processor: processor,
-            reset: function() {
-                self.onsets.length = 0;
-                self.localMaximums.length = 0;
-                self.bands.length = 0;
-                self.peaks.length = 0;
-                self.peaks.fill(0, 0, thresholdWindow);
-            }
-        };
-        self.reset();
-        var separators = detectorHelpers.separate(fftSize, detectorHelpers.barkScale);
-        var prevCompressedBandsEnergy = [];
-        var prevEvent;
-        var prevTopBand;
-        var prevFreq;
-        var prevPrevFreq;
+            MFCC: (function() {
 
-        var drumDetection = function(event) {
+                var melFreqTable = {
+                    0: 20,
+                    250: 160,
+                    500: 394,
+                    750: 670,
+                    1000: 1000,
+                    1250: 1420,
+                    1500: 1900,
+                    1750: 2450,
+                    2000: 3120,
+                    2250: 4000,
+                    2500: 5100,
+                    2750: 6600,
+                    3000: 9000,
+                    3250: 14000,
+                    3500: 19000
+                };
 
-            var freq = new Uint8Array(analyser.frequencyBinCount);
-            analyser.getByteFrequencyData(freq);
-            freq = Array.prototype.slice.call(freq);
-            //freq = freq.slice(0, 20);
-
-            var tfreq = _(freq).map(function(val, i) {
-                return i * val * val;
-            });
-            //var bands = detectorHelpers.separateFreqData(tfreq, separators);
-            //var bandsEnergy = _.map(bands, detectorHelpers.triangularWindow);
-            var compressedBandsEnergy = _.map(tfreq, detectorHelpers.muLawCompression);
-            /*var hannSmoothedBandsEnergy = _.map(compressedBandsEnergy, function(value, i) {
-                return value * hannBandsCompressedEnergy[i];
-            });*/
-            var differentiatedBandsEnergy = _.map(compressedBandsEnergy, function(value, i) {
-                return value - (prevCompressedBandsEnergy[i] || 0);
-            });
-            var halfWaveDerivative = detectorHelpers.halfWaveRectify(differentiatedBandsEnergy);
-            var meanDz = math.mean(halfWaveDerivative);
-
-            self.peaks.push(meanDz);
-            var length = self.peaks.length;
-            var prevOnset;
-            if (length > 3) {
-                if (prevEvent && detectorHelpers.isPeak(self.peaks, length - 2)) {
-                    var value = self.peaks[length - 2];
-                    if (//self.peaks[length - 3] <= self.peaks[length-4] || self.peaks[length - 4] <= self.peaks[length-5]){
-                    //value >= 0.95 * Math.max.apply(null, self.peaks) ){
-                    value >= 0.6) /*&&
-                    (!self.onsets.length || value >= dynamicThreshold(self.peaks.slice( -thresholdWindow - 1, -1))) )*/ {
-                        prevOnset = {playTime: prevEvent.playbackTime*1000, topBand: prevTopBand, freq: prevFreq, prevFreq: prevPrevFreq};
-                        self.onsets.push(prevOnset);
-                        self.localMaximums.push(2);
-                    }
-                    else {
-                        self.localMaximums.push(1);
-                    }
+                var melFreqArray = _.pairs(melFreqTable);
+                var freqWindows = [];
+                for (var i = 0; i < melFreqArray.length - 1; i++ ) {
+                    freqWindows.push([melFreqArray[i][1], melFreqArray[i+1][1]]);
                 }
-                else {
-                    self.localMaximums.push(0);
-                }
-            }
-            prevEvent = event;
-            prevPrevFreq = prevFreq;
-            prevFreq = freq;
-            prevTopBand = freq.indexOf(Math.max.apply(null, freq));
+                //console.log(freqWindows);
+                var binWindows = _.memoize(function(size) {
+                    var binFreqWidth = audioCtx.sampleRate/size;
+
+                    var binWindows = _.map(freqWindows, function(window) {
+                        return [math.floor(window[0]/binFreqWidth), math.floor(window[1]/binFreqWidth)];
+                    });
+
+                    return binWindows;
+                });
+
+                return function(spec) {
+                    var windows = binWindows(spec.length);
+                    var energies = _(windows).map(function(window) {
+                        var part = spec.slice(window[0], window[1]);
+                        //part = _.map(part, function(val) { return val * val});
+
+                        //var val = math.log(math.sum(self.applyWindow(self.triangularWindow, part))+0.1);
+
+                        //return val;
+                        return math.sum(part)/part.length;
+                    });
+
+                    return energies;
+                    //return self.DCT2(energies);
+                };
+            })()
         };
 
         return self;
@@ -262,116 +231,6 @@ angular.module('sound')
      * http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.169.4504&rep=rep1&type=pdf
      *
      * */
-    .factory('drumDetectionBossier', function(audioCtx, $rootScope, onsetDetection) {
-        var $scope = $rootScope.$new();
-        var distortion = audioCtx.createWaveShaper();
-        var gainNode = audioCtx.createGain();
-        var biquadFilter = audioCtx.createBiquadFilter();
-        var convolver = audioCtx.createConvolver();
-        var analyser = audioCtx.createAnalyser();
-        var processor = audioCtx.createScriptProcessor(fftSize, 1, 1);
-        var fftSize = 2048;
-        analyser.minDecibels = -60;
-        analyser.maxDecibels = -10;
-        analyser.smoothingTimeConstant = 0.1;
-        analyser.fftSize = fftSize;
-
-        analyser.connect(distortion);
-        distortion.connect(biquadFilter);
-        biquadFilter.connect(convolver);
-        convolver.connect(gainNode);
-        gainNode.connect(processor);
-        processor.connect(audioCtx.destination);
-
-        var peaks = [];
-
-
-        var self = {
-            initRecordFingerPrint: function() {
-                processor.onaudioprocess = drumDetection;
-            },
-            bandsDebugData: [],
-            hfcData: [0],
-            bands: [[],[],[],[]],
-            peaks: [],
-            postProcessedData: [],
-            onsets: [],
-            reset: function() {
-                self.bandsDebugData.length = 0;
-                self.hfcData.length = 0;
-                self.bands.length = 0;
-                self.peaks.length = 0;
-                self.postProcessedData.length = 0;
-                self.onsets.length = 0;
-            },
-            analyzer: analyser,
-            scope: $scope,
-            processor: processor
-        };
-
-        var drumDetection = (function(){
-            var record = [], recording, prevValue = 0, currentValue = 0;
-                analyzeData = function(data) {
-                    data.forEach(function(afc) {
-                        var max = 0, index = 0;
-                        afc.forEach(function(amp, position) {
-                            if (amp > max) {
-                                max = amp;
-                                index = position;
-                            }
-                        });
-
-                    });
-                };
-            /*var customPeaksBands = {
-                bd: {start: 8, end: 13, name: 'bd'},
-                sd: {start: 10, end: 16, name: 'sd'},
-                hh: {start: 227, end: 234, name: 'hh'}
-            };
-            var bookBands = {
-                bd: {start: 90, end: 90, name: 'bd'},
-                sd: {start: 260, end: 300, name: 'sd'},
-                hh: {start: 9000, end: 9000, name: 'hh'}
-            };
-            var bands = bookBands;
-            _(bands).each(function(band) {
-                band.start = onsetDetection.freqToBin(band.start, fftSize);
-                band.end = onsetDetection.freqToBin(band.end, fftSize);
-                band.prevData = [].fill(0, 0, band.end - band.start +1);
-                band.spectrDiff = [];
-            });*/
-            //console.log('bands', bands);
-            //self.bands = bands;
-
-            var prevEvent;
-            return function(event) {
-                var spectr = new Uint8Array(analyser.frequencyBinCount);
-                analyser.getByteFrequencyData(spectr);
-
-                //HFC
-                var sum = onsetDetection.hfc(spectr);
-                self.hfcData.push(sum);
-                self.postProcessedData.push(onsetDetection.firFilter(self.hfcData, 10, 0.1));
-                //self.postProcessedData.push(sum);
-
-                var length = self.postProcessedData.length;
-                if (length > 1) {
-                    if (onsetDetection.isPeak(self.postProcessedData, length - 2)
-                        && self.postProcessedData[length - 1] > onsetDetection.dynamicThreshold(self.postProcessedData.slice(self.postProcessedData.length - 8, self.postProcessedData.length))) {
-                        self.peaks.push(1);
-                        self.onsets.push({playTime: prevEvent.timeStamp});
-                    }
-                    else {
-                        self.peaks.push(0);
-                    }
-                }
-                prevEvent = event;
-            }
-        })();
-
-
-        return self;
-    })
     .factory('soundLoader', function(audioCtx, $http, $q) {
 
         return {

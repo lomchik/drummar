@@ -110,12 +110,15 @@ angular.module('sound').directive('soundVisualization', function() {
     .directive('arrayVisualization', function() {
         return {
             scope: {
-                data: '='
+                data: '=',
+                width: '='
             },
             replace: true,
-            template: '<canvas width="640" height="80" style="width:100%"></canvas>',
+            template: '<div style="width:100%; overflow-x: auto; background:black">' +
+                '<canvas width="640" height="80"></canvas>' +
+            '</div>',
             link: function(scope, element, attrs) {
-                var canvas = element[0],
+                var canvas = element.find('canvas')[0],
                     canvasCtx = canvas.getContext("2d"),
                     WIDTH = canvas.width,
                     HEIGHT = canvas.height;
@@ -130,6 +133,9 @@ angular.module('sound').directive('soundVisualization', function() {
 
                     function draw() {
                         if (scope.data) {
+                            canvas.width = Math.max(640, scope.data.length);
+                            WIDTH = canvas.width,
+                            HEIGHT = canvas.height;
                             var dataArray = scope.data, bufferLength = dataArray.length;
                             var maxValue = Math.max.apply(null, dataArray);
                             canvasCtx.fillStyle = 'rgb(0, 0, 0)';

@@ -35,11 +35,11 @@
     </section>
     <sound-visualization analyser="analyser"></sound-visualization>
     <array-visualization data="soundAnalyser.localMaximums"></array-visualization>
-    <array-visualization data="soundAnalyser.peaks"></array-visualization>
-    <div ng-repeat="onset in onsets">
+    <array-visualization data="soundAnalyser.ddf"></array-visualization>
+    <!--<div ng-repeat="onset in onsets.slice().reverse()">
         <md-checkbox ng-model="onset.selected">{{$index+1}} max freq: {{onset.topBand}}</md-checkbox>
         <array-visualization  data="onset.freq"></array-visualization>
-    </div>
+    </div>-->
 
     <section layout="row" layout-sm="column" layout-align="left center" layout-wrap>
         <md-select aria-label="select drum type" ng-model="drumType">
@@ -57,10 +57,9 @@
 <script src="bower_components/angular-aria/angular-aria.js"></script>
 <script src="bower_components/angular-animate/angular-animate.js"></script>
 <script src="bower_components/angular-material/angular-material.js"></script>
-<script src="bower_components/teoria/teoria.js"></script>
+<script src="bower_components/angular-file-saver/dist/angular-file-saver.bundle.js"></script>
 <script src="bower_components/underscore/underscore.js"></script>
 <script src="bower_components/mathjs/dist/math.js"></script>
-<script src="bower_components/dsp.js/dsp.js"></script>
 <script src="node_modules/midifile/dist/MIDIFile.js"></script>
 
 

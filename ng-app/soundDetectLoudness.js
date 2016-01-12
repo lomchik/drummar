@@ -1,5 +1,5 @@
 angular.module('sound')
-    .factory('soundDetectLoudness', function($rootScope, detectorHelpers) {
+    .factory('soundDetectLoudness', function($rootScope, dspHelpers) {
 
 
         return {

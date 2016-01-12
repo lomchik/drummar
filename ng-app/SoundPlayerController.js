@@ -1,5 +1,6 @@
-angular.module('sound').controller('SoundPlayerController', function($scope, myOnsetDetection, audioInput, soundLoader,
-                                                                     audioCtx, midiParser, soundDrumDetector, $http) {
+angular.module('sound', ['ngFileSaver']).controller('SoundPlayerController', function($scope, myOnsetDetection, audioInput, soundLoader,
+                                                                     audioCtx, midiParser, soundDrumDetector, $http,
+                                                                     FileSaver, Blob) {
     var onsetDetection = myOnsetDetection;
     $scope.analyser = onsetDetection.analyzer;
     $scope.soundAnalyser = onsetDetection;
@@ -18,7 +19,11 @@ angular.module('sound').controller('SoundPlayerController', function($scope, myO
         'media/ipad-air-one-crash.ogg',
         'media/ipad-air-one-snare.ogg',
         'media/ipad-air-one-bassdrum.ogg',
-        'media/ipad-air-one-hihat.ogg'
+        'media/ipad-air-one-hihat.ogg',
+        'media/test-material-bd+hh.ogg',
+        'media/test-material-sd+bd.ogg',
+        'media/test-material-sd+hh.ogg',
+        'media/test-material-hh+sd+bd.ogg'
     ];
     $scope.midiTracks = [
         'media/Test Rock Drum Fills.mid.midi',
@@ -26,7 +31,7 @@ angular.module('sound').controller('SoundPlayerController', function($scope, myO
         'media/Two Handed Hi-Hat Beat and 16th Note Linear Fill.midi',
         'media/Two Handed Hi-Hat Beat.midi'
     ];
-    $scope.track = $scope.tracks[9];
+    $scope.track = $scope.tracks[13];
     $scope.midiTrack = $scope.midiTracks[0];
     $scope.microphoneOn = false;
     $scope.midiOnsets = [];
@@ -34,7 +39,7 @@ angular.module('sound').controller('SoundPlayerController', function($scope, myO
     $scope.drumType = $scope.drumTypes[0];
     $scope.learnData = {};
     $scope.gatherSelectedData = function () {
-        return _($scope.onsets).where({selected: true}).map(function(val){ return val.freq; });
+        return _($scope.onsets).where({selected: true}).map(function(val){ return [val.freq, val.nextFreq]; });
     };
     $scope.learn = function() {
         soundDrumDetector.learn($scope.drumType, $scope.gatherSelectedData());
@@ -43,20 +48,22 @@ angular.module('sound').controller('SoundPlayerController', function($scope, myO
         $scope.learnData[$scope.drumType] = ($scope.learnData[$scope.drumType] || []).concat($scope.gatherSelectedData());
     };
     $scope.downloadData = function() {
-        console.log($scope.learnData[$scope.drumType].length);
+        var data = new Blob([JSON.stringify($scope.learnData[$scope.drumType])], { type: 'text/plain;charset=utf-8' });
+        FileSaver.saveAs(data, $scope.drumType+'-learn-data.json');
+        /*console.log($scope.learnData[$scope.drumType].length);
         downloadURI('data:text/json;base64,' + btoa(JSON.stringify($scope.learnData[$scope.drumType])), $scope.drumType+'-learn-data.json');
-    };
+    */};
     function downloadURI(uri, name) {
         var link = document.createElement("a");
         link.download = name;
         link.href = uri;
         link.click();
     }
-    $http.get('hmm-data/bd-learn-data.json').success(function(data) {
-        soundDrumDetector.learn ('bd', data);
-    });
-    $http.get('hmm-data/sd-learn-data.json').success(function(data) {
-        soundDrumDetector.learn ('sd', data);
+    _.each($scope.drumTypes, function(type) {
+        if (type.length > 2) return;
+        $http.get('hmm-data/'+type+'-learn-data.json').success(function(data) {
+            soundDrumDetector.learn(type, data);
+        });
     });
     midiParser.getOnsets($scope.midiTracks[0], function(onsets) {
         angular.copy(onsets, $scope.midiOnsets);
@@ -134,12 +141,22 @@ angular.module('sound').controller('SoundPlayerController', function($scope, myO
         onset.selected = true;
         $scope.onsets.push(onset);
         $scope.$digest();
-       console.log('detected: ' + soundDrumDetector.detect(onset.freq));
+        if ($scope.onsets.length > 500) {
+            $scope.source.stop();
+            $scope.save();
+            $scope.downloadData();
+        }
+        console.log('detected: ' + soundDrumDetector.detect([onset.freq, onset.nextFreq]));
     });
 
     $scope.$watch('microphoneOn', function(value) {
         if (!$scope.input) return;
-        value ? $scope.input.connect($scope.analyser) : $scope.input.disconnect();
+        if (value) {
+            onsetDetection.start();
+            $scope.input.connect($scope.analyser)
+        } else {
+            $scope.input.disconnect();
+        }
     });
     $scope.$watch('track', function(newValue) {
         onsetDetection.reset();
@@ -147,10 +164,13 @@ angular.module('sound').controller('SoundPlayerController', function($scope, myO
         soundLoader.load(newValue).then(function(trackSource) {
             $scope.source && $scope.source.disconnect();
             $scope.source = trackSource;
+
             $scope.source.onended = function() {
+                console.log('finished');
                 /*$http.post('http://127.0.0.1:3000/test-onsets', JSON.stringify({founded: soundAnalyser.onsets, midi: $scope.midiTrack.replace('media/', '')})).then(function(result) {
                     console.log(result.data);
                 });*/
+                onsetDetection.stop();
                 $scope.$digest();
                 var results = compareTimings(prepareTiming(onsetDetection.onsets), prepareTiming($scope.midiOnsets));
                 //console.log(results);
@@ -170,6 +190,6 @@ angular.module('sound').controller('SoundPlayerController', function($scope, myO
         $scope.source.connect($scope.analyser);
         $scope.source.connect(audioCtx.destination);
         $scope.source.start();
-        onsetDetection.initRecordFingerPrint();
+        onsetDetection.start();
     });
 });

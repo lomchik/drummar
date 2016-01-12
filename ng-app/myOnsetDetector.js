@@ -1,40 +1,39 @@
 angular.module('sound')
-    .factory('myOnsetDetection', function(audioCtx, $rootScope, detectorHelpers) {
+    .factory('myOnsetDetection', function(audioCtx, $rootScope, dspHelpers) {
         var fftSize = 2048;
         var $scope = $rootScope.$new();
-        var distortion = audioCtx.createWaveShaper();
-        var gainNode = audioCtx.createGain();
-        var biquadFilter = audioCtx.createBiquadFilter();
-        var convolver = audioCtx.createConvolver();
         var analyser = audioCtx.createAnalyser();
         var processor = audioCtx.createScriptProcessor(fftSize, 1, 1);
+
         analyser.minDecibels = -90;
         analyser.maxDecibels = 0;
-        analyser.smoothingTimeConstant = 0.25;
+        analyser.smoothingTimeConstant = 0.75;
         analyser.fftSize = fftSize;
 
-        analyser.connect(distortion);
-        distortion.connect(biquadFilter);
-        biquadFilter.connect(convolver);
-        convolver.connect(gainNode);
-        gainNode.connect(processor);
+        analyser.connect(processor);
         processor.connect(audioCtx.destination);
 
 
         var self = {
-            initRecordFingerPrint: function() {
+            start: function() {
                 processor.onaudioprocess = drumDetection;
+               /* audioCtx.startRendering().then(function(renderedBuffer) {
+                    console.log(renderedBuffer);
+                });*/
+            },
+            stop: function() {
+                processor.onaudioprocess = null;
             },
             onsets: [],
             localMaximums: [],
-            peaks: [],
+            ddf: [],
             analyzer: analyser,
             scope: $scope,
             processor: processor,
             reset: function() {
                 self.onsets.length = 0;
                 self.localMaximums.length = 0;
-                self.peaks.length = 0;
+                self.ddf.length = 0;
             }
         };
         self.reset();
@@ -44,31 +43,30 @@ angular.module('sound')
         var prevFreq;
         var prevPrevFreq;
 
-        var drumDetection = function(event) {
-
-            var freq = new Uint8Array(analyser.frequencyBinCount);
-            analyser.getByteFrequencyData(freq);
-            freq = Array.prototype.slice.call(freq);
-            //freq = freq.slice(0, 20);
-
-            var tfreq = _(freq).map(function(val, i) {
-                return i * val;
-            });
-            var compressedBandsEnergy = _.map(tfreq, detectorHelpers.muLawCompression);
+        function ddFunction(freq) {
+            var compressedBandsEnergy = _.map(freq, dspHelpers.muLawCompression);
             var differentiatedBandsEnergy = _.map(compressedBandsEnergy, function(value, i) {
                 return value - (prevCompressedBandsEnergy[i] || 0);
             });
-            var halfWaveDerivative = detectorHelpers.halfWaveRectify(differentiatedBandsEnergy);
+            var halfWaveDerivative = dspHelpers.halfWaveRectify(differentiatedBandsEnergy);
             var meanDz = math.mean(halfWaveDerivative);
 
-            self.peaks.push(meanDz);
-            var length = self.peaks.length;
+            return meanDz * math.sum(freq)/255/freq.length;
+        }
+
+        var drumDetection = function(event) {
+            var freq = new Uint8Array(analyser.frequencyBinCount);
+            analyser.getByteFrequencyData(freq);
+            freq = Array.prototype.slice.call(freq);
+
+            self.ddf.push(ddFunction(freq));
+            var length = self.ddf.length;
             var prevOnset;
             if (length > 3) {
-                if (prevEvent && detectorHelpers.isPeak(self.peaks, length - 2)) {
-                    var value = self.peaks[length - 2];
-                    if (value >= 0.6) {
-                        prevOnset = {playTime: prevEvent.playbackTime*1000, topBand: prevTopBand, freq: prevFreq, prevFreq: prevPrevFreq};
+                if (prevEvent && dspHelpers.isPeak(self.ddf, length - 2)) {
+                    var value = self.ddf[length - 2];
+                    if (value >= 0.05) {
+                        prevOnset = {playTime: prevEvent.playbackTime*1000, topBand: prevTopBand, freq: prevFreq, nextFreq: freq, prevFreq: prevPrevFreq};
                         self.onsets.push(prevOnset);
                         $scope.$emit('onsetDetected', prevOnset);
                         self.localMaximums.push(2);

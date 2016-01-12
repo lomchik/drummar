@@ -1,25 +1,19 @@
 angular.module('sound')
-    .factory('soundDrumDetector', function($rootScope, detectorHelpers) {
+    .factory('soundDrumDetector', function($rootScope, dspHelpers) {
         var types = ['bd', 'sd', 'hh', 'bd,sd', 'bd,hh', 'sd,hh', 'bd,sd,hh'];
         var states = [];
         var symbols = [];
-        var divider = 10;
-        var melSeparators = detectorHelpers.separate(2048, detectorHelpers.melScale);
+        var divider =  5;
+        var melSeparators = dspHelpers.separate(2048, dspHelpers.barkScale);
         var models = {};
         var finalState = 'F';
-        var prepareFreqData = function(freq) {
-            var mels = detectorHelpers.separateFreqData(freq, melSeparators);
-            mels = _.map(mels, function(val) {return ''+math.round(math.sum(val)/val.length/divider);} );
+        var prepareFreqData = function(freqs) {
+            var mels = _.map(dspHelpers.MFCC(freqs[0]), function(val) {return ''+math.round(math.sum(val)/divider);} );
+            var melsNext = _.map(dspHelpers.MFCC(freqs[1]), function(val) {return ''+math.round(math.sum(val)/divider);} );
+            var dMels = math.subtract(mels, melsNext);
 
-            return mels;
+            return mels.concat(melsNext);
         };
-        for (var i=0; i<255/10; i++) {
-            symbols.push('' + i);
-        }
-        for (var i = 0; i<melSeparators.length;i++) {
-            states.push(i);
-        }
-        states.push(finalState);
 
         return {
             types: types,
@@ -30,8 +24,10 @@ angular.module('sound')
                     var model = models[type] = new HMM();
                 }
                 model.initialize(data, data[0].length);
+                console.log(type, _.map(model.emissionProbability, function(values) {
+                    return _.size(values);
+                }).join(' '));
 
-                console.log(model.transitionProbability, model.emissionProbability);
             },
             detect: function(data) {
                 var probabilities = {},
