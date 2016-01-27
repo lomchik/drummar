@@ -23,19 +23,30 @@
 <div ng-controller="SoundPlayerController">
     <section layout="row" layout-align="left center" layout-wrap>
         <md-select class="no-margin" aria-label="select track" ng-model="track" layout-wrap>
-            <md-option ng-value="item" ng-repeat="item in tracks">{{item}}</md-option>
+            <md-option ng-value="item" ng-repeat="item in tracks">{{item.file.replace('media/', '')}}</md-option>
         </md-select>
+        <md-input-container>
+            <md-button class="md-fab md-mini md-primary" aria-label="play/stop" ng-click="playing ? stop() : play()">
+                <md-icon ng-show="!playing"  md-font-icon="mdi mdi-play" ng-style="{'font-size': '29px', height: '30px'}"></md-icon>
+                <md-icon ng-show="playing" md-font-icon="mdi mdi-stop" ng-style="{'font-size': '29px', height: '30px'}"></md-icon>
+            </md-button>
+        </md-input-container>
         <md-checkbox ng-model="microphoneOn" aria-label="Microphone On">Microphone On</md-checkbox>
-        <!--<md-input-container>
-        <md-button class="md-fab md-primary" aria-label="play/stop" ng-click="playing ? stop() : play()">
-            <md-icon ng-show="!playing"  md-font-icon="mdi mdi-play" ng-style="{'font-size': '40px', height: '40px'}"></md-icon>
-            <md-icon ng-show="playing" md-font-icon="mdi mdi-pause" ng-style="{'font-size': '40px', height: '40px'}"></md-icon>
-        </md-button>
-    </md-input-container>-->
-    </section>
-    <sound-visualization analyser="analyser"></sound-visualization>
-    <array-visualization data="soundAnalyser.localMaximums"></array-visualization>
-    <array-visualization data="soundAnalyser.ddf"></array-visualization>
+        <md-checkbox ng-model="soundOn" aria-label="Microphone On">Sound On</md-checkbox>
+        <md-checkbox ng-model="visualizationOn" aria-label="Visualization On">Visualization</md-checkbox>
+    </section><!--
+    <sound-visualization analyser="onsetDetection.analyser"></sound-visualization>-->
+    <div style="float: left; color:white;" ng-style="{'background': color}" ng-repeat="(type,color) in onsetColors">{{type}}</div>
+    <div style="clear:both;"></div>
+
+    <div ng-if="visualizationOn" style="overflow-x: auto; direction: rtl;">
+        dz
+        <array-visualization data="onsetDetection.localMaximums"></array-visualization>
+        <array-visualization data="onsetDetection.ddf"></array-visualization><!--
+        mfcc
+        <array-visualization data="sparedOnsetDetection.localMaximums"></array-visualization>
+        <array-visualization data="sparedOnsetDetection.ddf"></array-visualization>-->
+    </div>
     <!--<div ng-repeat="onset in onsets.slice().reverse()">
         <md-checkbox ng-model="onset.selected">{{$index+1}} max freq: {{onset.topBand}}</md-checkbox>
         <array-visualization  data="onset.freq"></array-visualization>
@@ -45,12 +56,18 @@
         <md-select aria-label="select drum type" ng-model="drumType">
             <md-option ng-value="drum" ng-repeat="drum in drumTypes">{{drum}}</md-option>
         </md-select>
-
-        <md-button class="md-raised md-primary" ng-click="learn()">Learn</md-button>
-        <md-button class="md-raised md-primary" ng-click="downloadData()">Download data</md-button>
-        <md-button class="md-raised md-primary" ng-click="save()">save data</md-button>
+        <md-select aria-label="select track repeat" ng-model="repeatTimes">
+            <md-option ng-value="val" ng-repeat="val in repeatVariants">{{val}}</md-option>
+        </md-select>
+        <md-button class="md-raised md-primary" ng-click="gatherLearnData(drumType, repeatTimes)">Learn</md-button>
     </section>
 </div>
+
+
+
+
+
+
 
 <!-- Below is library scripts -->
 <script src="bower_components/angular/angular.min.js"></script>
@@ -65,6 +82,10 @@
 
 <!-- Below is your custom library scripts -->
 <script src="js/hmm.js"></script>
+<script src="js/model-maker.js"></script>
+<script src="js/dsp-helpers.js"></script>
+<script src="js/onset-detector.js"></script>
+<script src="js/spared-onset-detector.js"></script>
 
 <!-- Below is your custom application scripts -->
 <script src="ng-app/app.js"></script>

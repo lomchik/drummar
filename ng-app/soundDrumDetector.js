@@ -1,18 +1,28 @@
 angular.module('sound')
     .factory('soundDrumDetector', function($rootScope, dspHelpers) {
         var types = ['bd', 'sd', 'hh', 'bd,sd', 'bd,hh', 'sd,hh', 'bd,sd,hh'];
-        var states = [];
-        var symbols = [];
-        var divider =  5;
-        var melSeparators = dspHelpers.separate(2048, dspHelpers.barkScale);
         var models = {};
-        var finalState = 'F';
+        var divider = 1/100;
         var prepareFreqData = function(freqs) {
-            var mels = _.map(dspHelpers.MFCC(freqs[0]), function(val) {return ''+math.round(math.sum(val)/divider);} );
-            var melsNext = _.map(dspHelpers.MFCC(freqs[1]), function(val) {return ''+math.round(math.sum(val)/divider);} );
-            var dMels = math.subtract(mels, melsNext);
+            var mels = dspHelpers.MFCC(freqs[1]);
+            mels = dspHelpers.cutMinVal(mels);
+            mels = dspHelpers.normalize(mels);
+            mels = math.divide(mels, divider);
+            mels = math.round(mels);
 
-            return mels.concat(melsNext);
+            var prevMels = dspHelpers.MFCC(freqs[0]);
+            prevMels = dspHelpers.cutMinVal(prevMels);
+            prevMels = dspHelpers.normalize(prevMels);
+            prevMels = math.divide(prevMels, divider);
+            prevMels = math.round(prevMels);
+
+            var melsNext = dspHelpers.MFCC(freqs[2]);
+            melsNext = dspHelpers.cutMinVal(melsNext);
+            melsNext = dspHelpers.normalize(melsNext);
+            melsNext = math.divide(melsNext, divider);
+            melsNext = math.round(melsNext);
+
+            return mels.concat(prevMels, melsNext);
         };
 
         return {
@@ -21,12 +31,20 @@ angular.module('sound')
                 var data = _(freqs).map(prepareFreqData);
                 var model = models[type];
                 if (!model) {
-                    var model = models[type] = new HMM();
+                    var model = models[type] = /*new ModelMaker();//*/new HMM();
                 }
+                //model.learn(data);
+                //model.approximate();
                 model.initialize(data, data[0].length);
-                console.log(type, _.map(model.emissionProbability, function(values) {
+                /*console.log(type, _.map(model.emissionProbability, function(values) {
                     return _.size(values);
-                }).join(' '));
+                }).join(' '));*/
+                /*console.log(type, _.map(model.probabilities, function(values) {
+                    return _.size(values);
+                }).join(' '));*/
+
+
+                console.log(model.probabilities);
 
             },
             detect: function(data) {
@@ -35,13 +53,14 @@ angular.module('sound')
                     detectedType;
                 _(models).each(function(model, type) {
                     probabilities[type] = model.viterbiApproximation(prepareFreqData(data));
+                    //probabilities[type] = model.probability(prepareFreqData(data));
                     if (max < probabilities[type]) {
                         detectedType = type;
+                        max = probabilities[type];
                     }
                 });
 
-
-                return detectedType;// ['bd', 'sd', 'hh'] or other combinations
+                return detectedType;
             }
         };
     });

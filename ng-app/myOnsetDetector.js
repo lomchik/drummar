@@ -1,89 +1,78 @@
 angular.module('sound')
-    .factory('myOnsetDetection', function(audioCtx, $rootScope, dspHelpers) {
-        var fftSize = 2048;
-        var $scope = $rootScope.$new();
-        var analyser = audioCtx.createAnalyser();
-        var processor = audioCtx.createScriptProcessor(fftSize, 1, 1);
+    .factory('myOnsetDetection', function(audioCtx, offlineAudionCtx, $rootScope, dspHelpers) {
 
-        analyser.minDecibels = -90;
-        analyser.maxDecibels = 0;
-        analyser.smoothingTimeConstant = 0.75;
-        analyser.fftSize = fftSize;
-
-        analyser.connect(processor);
-        processor.connect(audioCtx.destination);
+        return function(fftSize, detector, smoothingTimeConstant) {
+            var fftSize = fftSize || 2048;
+            var $scope = $rootScope.$new();
+            var smoothingTimeConstant = smoothingTimeConstant;
+            var runDetectorId;
+            var windowTime = fftSize/audioCtx.sampleRate/2 * 1000;
 
 
-        var self = {
-            start: function() {
-                processor.onaudioprocess = drumDetection;
-               /* audioCtx.startRendering().then(function(renderedBuffer) {
-                    console.log(renderedBuffer);
-                });*/
-            },
-            stop: function() {
-                processor.onaudioprocess = null;
-            },
-            onsets: [],
-            localMaximums: [],
-            ddf: [],
-            analyzer: analyser,
-            scope: $scope,
-            processor: processor,
-            reset: function() {
-                self.onsets.length = 0;
-                self.localMaximums.length = 0;
-                self.ddf.length = 0;
-            }
-        };
-        self.reset();
-        var prevCompressedBandsEnergy = [];
-        var prevEvent;
-        var prevTopBand;
-        var prevFreq;
-        var prevPrevFreq;
+            var self = {
+                detector: detector,
+                init: function (context) {
+                    self.context = context;
+                    self.analyser && self.analyser.disconnect();
+                    self.analyser = self.context.createAnalyser();
+                    clearInterval(runDetectorId)
+                    self.processor && (self.processor.onaudioprocess = null);
+                    self.processor = self.context.createScriptProcessor(fftSize, 1, 1);
+                    self.gainNode && self.gainNode.disconnect();
+                    self.gainNode = audioCtx.createGain();
 
-        function ddFunction(freq) {
-            var compressedBandsEnergy = _.map(freq, dspHelpers.muLawCompression);
-            var differentiatedBandsEnergy = _.map(compressedBandsEnergy, function(value, i) {
-                return value - (prevCompressedBandsEnergy[i] || 0);
-            });
-            var halfWaveDerivative = dspHelpers.halfWaveRectify(differentiatedBandsEnergy);
-            var meanDz = math.mean(halfWaveDerivative);
+                    self.gainNode.gain.value = 1;
+                    self.analyser.minDecibels = -90;
+                    self.analyser.maxDecibels = 0;
+                    self.analyser.smoothingTimeConstant = smoothingTimeConstant;
 
-            return meanDz * math.sum(freq)/255/freq.length;
-        }
+                    self.analyser.fftSize = fftSize;
+                    self.analyser.connect(self.processor);
+                    self.processor.connect(self.context.destination);
+                },
+                start: function (source, context) {
+                    self.init(context);
+                    self.reset();
+                    //TODO: count exactly time
+                    runDetectorId = setInterval(runDetector, windowTime);
+                    //self.processor.onaudioprocess = runDetector;
+                    source.connect(self.gainNode);
+                    self.gainNode.connect(self.analyser);
+                    self.context.startRendering && self.context.startRendering();
+                },
+                stop: function () {
+                    clearInterval(runDetectorId)
+                    self.processor.onaudioprocess = null;
+                },
+                onsets: [],
+                localMaximums: [],
+                ddf: [],
+                scope: $scope,
+                reset: function () {
+                    self.detector.reset();
+                    self.onsets.length = 0;
+                    self.localMaximums.length = 0;
+                    self.ddf = self.detector.ddf;
+                }
+            };
+            self.init(audioCtx);
 
-        var drumDetection = function(event) {
-            var freq = new Uint8Array(analyser.frequencyBinCount);
-            analyser.getByteFrequencyData(freq);
-            freq = Array.prototype.slice.call(freq);
+            var runDetector = function (event) {
+                var freq = new Uint8Array(self.analyser.frequencyBinCount);
+                self.analyser.getByteFrequencyData(freq);
+                freq = Array.prototype.slice.call(freq);
 
-            self.ddf.push(ddFunction(freq));
-            var length = self.ddf.length;
-            var prevOnset;
-            if (length > 3) {
-                if (prevEvent && dspHelpers.isPeak(self.ddf, length - 2)) {
-                    var value = self.ddf[length - 2];
-                    if (value >= 0.05) {
-                        prevOnset = {playTime: prevEvent.playbackTime*1000, topBand: prevTopBand, freq: prevFreq, nextFreq: freq, prevFreq: prevPrevFreq};
-                        self.onsets.push(prevOnset);
-                        $scope.$emit('onsetDetected', prevOnset);
-                        self.localMaximums.push(2);
-                    }
-                    else {
-                        self.localMaximums.push(1);
-                    }
+                var result = self.detector.check(freq,  1000);
+                if (result) {
+                    self.onsets.push(result);
+                    self.localMaximums.push({value: 2, onset: result});
+                    $scope.$emit('onsetDetected', result);
                 }
                 else {
-                    self.localMaximums.push(0);
+                    self.localMaximums.push({value: result === false ? 1 : 0});
                 }
-            }
-            prevEvent = event;
-            prevPrevFreq = prevFreq;
-            prevFreq = freq;
-            prevTopBand = freq.indexOf(Math.max.apply(null, freq));
-        };
+            };
 
-        return self;
+            return self;
+        }
     });

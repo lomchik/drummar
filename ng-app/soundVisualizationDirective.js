@@ -9,7 +9,6 @@ angular.module('sound').directive('soundVisualization', function() {
         link: function(scope, element, attrs) {
             var canvas = element[0],
                 canvasCtx = canvas.getContext("2d"),
-                analyser = scope.analyser,
                 WIDTH = canvas.width,
                 HEIGHT = canvas.height;
 
@@ -20,13 +19,14 @@ angular.module('sound').directive('soundVisualization', function() {
 
                 canvasCtx.clearRect(0, 0, WIDTH, HEIGHT);
 
-                var bufferLength = analyser.frequencyBinCount;
-                var dataArray = new Uint8Array(bufferLength);
-
-                canvasCtx.clearRect(0, 0, WIDTH, HEIGHT);
 
                 function draw() {
                     requestAnimationFrame(draw);
+
+                    canvasCtx.clearRect(0, 0, WIDTH, HEIGHT);
+                    var analyser = scope.analyser;
+                    var bufferLength = analyser.frequencyBinCount;
+                    var dataArray = new Uint8Array(bufferLength);
 
                     analyser.getByteFrequencyData(dataArray);
 
@@ -114,7 +114,7 @@ angular.module('sound').directive('soundVisualization', function() {
                 width: '='
             },
             replace: true,
-            template: '<div style="width:100%; overflow-x: auto; background:black">' +
+            template: '<div style="width:100%; overflow-x: visible; background:black">' +
                 '<canvas width="640" height="80"></canvas>' +
             '</div>',
             link: function(scope, element, attrs) {
@@ -133,24 +133,35 @@ angular.module('sound').directive('soundVisualization', function() {
 
                     function draw() {
                         if (scope.data) {
+
                             canvas.width = Math.max(640, scope.data.length);
-                            WIDTH = canvas.width,
+                            WIDTH = canvas.width;
                             HEIGHT = canvas.height;
                             var dataArray = scope.data, bufferLength = dataArray.length;
-                            var maxValue = Math.max.apply(null, dataArray);
+                            if (dataArray[0] != undefined && typeof dataArray[0] != 'object') {
+                                dataArray = _.map(dataArray, function(value) {
+                                    return {
+                                        value: value
+                                    };
+                                })
+                            }
+                            var maxValue = Math.max.apply(null, _.pluck(dataArray, 'value'));
                             canvasCtx.fillStyle = 'rgb(0, 0, 0)';
                             canvasCtx.fillRect(0, 0, WIDTH, HEIGHT);
                             canvasCtx.fillStyle = 'white';
-                            canvasCtx.fillText('max: ' + maxValue.toFixed(5), 10, 10)
+                            canvasCtx.fillText('max: ' + maxValue.toFixed(5), 100, 10)
                             var barHeight;
                             var x = 0;
 
                             canvasCtx.fillStyle = 'yellow';
 
                             for (var i = 0; i < bufferLength; i++) {
-                                var value = dataArray[i] / maxValue;
+                                var value = dataArray[i].value / maxValue;
                                 var barWidth = 0.5;
                                 barHeight = value * HEIGHT;
+
+                                canvasCtx.fillStyle = dataArray[i].color || 'yellow';
+
                                 canvasCtx.fillRect(x, HEIGHT - barHeight, barWidth, barHeight);
 
                                 x += barWidth + 0.5;

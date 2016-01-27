@@ -4,7 +4,11 @@
   "description": "",
   "main": "index.js",
   "dependencies": {
-    "midifile": "~1.0.1"
+    "midifile": "~1.0.1",
+    "express": "~4.13.3",
+    "body-parser": "~1.14.2",
+    "multer": "~1.1.0",
+    "moment": "~2.11.1"
   },
   "devDependencies": {
     "karma": "~0.13.15",
@@ -16,7 +20,9 @@
     "sinon": "~1.17.2",
     "sinon-chai": "~2.8.0",
     "karma-sinon-chai": "~1.1.0",
-    "karma-firefox-launcher": "~0.1.7"
+    "karma-firefox-launcher": "~0.1.7",
+    "concat-files": "~0.1.0",
+    "replace": "~0.3.0"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

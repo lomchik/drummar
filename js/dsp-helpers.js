@@ -49,14 +49,14 @@ var dspHelpers = (function() {
         hfc: function(array) {
             var sum = 0;
             for (var i = 0, l = array.length; i < l; i++) {
-                sum += (i+1) * array[i] * array[i];
+                sum += (i+1) * array[i];
             }
 
             return sum/array.length;
         },
         isPeak: function(array, index) {
             var val = array[index];
-            return (    val > array[index-1] || (val == array[index-1] && val >=array[index-2]))  && val > array[index+1];
+            return (    val > array[index-1] || (val == array[index-1] ) && array[index-1]>array[index-2] )  && val > array[index+1];
         },
         firFilter: function(array, m, a) {
             var l = array.length,
@@ -179,13 +179,25 @@ var dspHelpers = (function() {
                     //var val = math.log(math.sum(self.applyWindow(self.triangularWindow, part))+0.1);
 
                     //return val;
-                    return math.sum(part)/part.length;
+                    return math.sum(part)/part.length || 0;
                 });
 
                 return energies;
                 //return self.DCT2(energies);
             };
-        })()
+        })(),
+        cutMinVal: function(array) {
+            var min = math.min(array);
+
+            return math.subtract(array, min);
+        },
+        normalize: function(array) {
+            var min = math.min(array),
+                max= math.max(array),
+                diff = max - min;
+
+            return math.divide(array, diff);
+        }
     };
     var audioCtx = self.audioCtx;
 
