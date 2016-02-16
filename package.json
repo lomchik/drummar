@@ -8,7 +8,8 @@
     "express": "~4.13.3",
     "body-parser": "~1.14.2",
     "multer": "~1.1.0",
-    "moment": "~2.11.1"
+    "moment": "~2.11.1",
+    "synaptic": "~1.0.2"
   },
   "devDependencies": {
     "karma": "~0.13.15",

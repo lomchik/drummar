@@ -20,7 +20,7 @@ SparedOnsetDetector.prototype = {
     plainDdFunction: function(freq) {
         var mfcc = dspHelpers.MFCC(freq);
 
-        return math.mean(mfcc);
+        return math.sum(mfcc);
     },
     hfcDdFunction: function(freq) {
 

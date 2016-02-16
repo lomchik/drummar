@@ -4,19 +4,19 @@ angular.module('sound')
         var models = {};
         var divider = 1/100;
         var prepareFreqData = function(freqs) {
-            var mels = dspHelpers.MFCC(freqs[1]);
+            var mels = dspHelpers.BFCC(freqs[1]);
             mels = dspHelpers.cutMinVal(mels);
             mels = dspHelpers.normalize(mels);
             mels = math.divide(mels, divider);
             mels = math.round(mels);
 
-            var prevMels = dspHelpers.MFCC(freqs[0]);
+            var prevMels = dspHelpers.BFCC(freqs[0]);
             prevMels = dspHelpers.cutMinVal(prevMels);
             prevMels = dspHelpers.normalize(prevMels);
             prevMels = math.divide(prevMels, divider);
             prevMels = math.round(prevMels);
 
-            var melsNext = dspHelpers.MFCC(freqs[2]);
+            var melsNext = dspHelpers.BFCC(freqs[2]);
             melsNext = dspHelpers.cutMinVal(melsNext);
             melsNext = dspHelpers.normalize(melsNext);
             melsNext = math.divide(melsNext, divider);
@@ -31,36 +31,36 @@ angular.module('sound')
                 var data = _(freqs).map(prepareFreqData);
                 var model = models[type];
                 if (!model) {
-                    var model = models[type] = /*new ModelMaker();//*/new HMM();
+                    var model = models[type] = new ModelMaker();//new HMM();
                 }
-                //model.learn(data);
-                //model.approximate();
-                model.initialize(data, data[0].length);
+                model.learn(data);
+                model.approximate();
+                //model.initialize(data, data[0].length);
+                //console.log(model.emissionProbability);
                 /*console.log(type, _.map(model.emissionProbability, function(values) {
                     return _.size(values);
                 }).join(' '));*/
                 /*console.log(type, _.map(model.probabilities, function(values) {
                     return _.size(values);
                 }).join(' '));*/
-
-
-                console.log(model.probabilities);
-
             },
             detect: function(data) {
                 var probabilities = {},
                     max = 0,
                     detectedType;
                 _(models).each(function(model, type) {
-                    probabilities[type] = model.viterbiApproximation(prepareFreqData(data));
-                    //probabilities[type] = model.probability(prepareFreqData(data));
+                    //probabilities[type] = model.viterbiApproximation(prepareFreqData(data));
+                    probabilities[type] = model.probability(prepareFreqData(data));
                     if (max < probabilities[type]) {
                         detectedType = type;
                         max = probabilities[type];
                     }
                 });
 
-                return detectedType;
+                return {
+                    type: detectedType,
+                    probabilities: probabilities
+                };
             }
         };
     });

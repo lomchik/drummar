@@ -4,8 +4,9 @@ var dspHelpers = (function() {
             return 8.96 * Math.log(0.978 + 5 * Math.log(0.994 + Math.pow((freq + 75.4)/2173, 1.347)));
         };
 
+    var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     var self = {
-        audioCtx: new (window.AudioContext || window.webkitAudioContext)(),
+        audioCtx: audioCtx,
         barkScale: barkScale,
         separate: function(fftSize, scale) {
             var dividers = [], prevValue = -1, value;
@@ -124,6 +125,16 @@ var dspHelpers = (function() {
 
             return compressedBandsEnergy;
         },
+        applyFilter: function(spec, filter) {
+
+            var result = [];
+
+            for (var i = 0, length = math.min(spec.length, filter.length); i < length; i++) {
+                result.push(spec[i]*filter[i]);
+            }
+
+            return result;
+        },
         DCT2: function(arr) {
             var result = [];
             for (var n = 0, M = arr.length; n < M; n++) {
@@ -136,54 +147,89 @@ var dspHelpers = (function() {
         },
         MFCC: (function() {
 
-            var melFreqTable = {
-                0: 20,
-                250: 160,
-                500: 394,
-                750: 670,
-                1000: 1000,
-                1250: 1420,
-                1500: 1900,
-                1750: 2450,
-                2000: 3120,
-                2250: 4000,
-                2500: 5100,
-                2750: 6600,
-                3000: 9000,
-                3250: 14000,
-                3500: 19000
-            };
+            //var freqTable = [300, 517.33, 781.90, 1103.97, 1496.04, 1973.32, 2554.33, 3261.62, 4122.63, 5170.76, 6446.70, 8000];
+            var freqTable = [40,161,200,404,693,867,1000,2022,3000,3393,4109,5526,6500,7743,12000];
 
-            var melFreqArray = _.pairs(melFreqTable);
-            var freqWindows = [];
-            for (var i = 0; i < melFreqArray.length - 1; i++ ) {
-                freqWindows.push([melFreqArray[i][1], melFreqArray[i+1][1]]);
-            }
-            //console.log(freqWindows);
-            var binWindows = _.memoize(function(size) {
-                var binFreqWidth = audioCtx.sampleRate/size;
+            var freq2bins = _.memoize(function(size) {
+                var binFreqWidth = (size)/audioCtx.sampleRate;
 
-                var binWindows = _.map(freqWindows, function(window) {
-                    return [math.floor(window[0]/binFreqWidth), math.floor(window[1]/binFreqWidth)];
+                var bins = _.map(freqTable, function(val) {
+                    return Math.floor(val*binFreqWidth);
                 });
 
-                return binWindows;
+                return bins;
             });
 
-            return function(spec) {
-                var windows = binWindows(spec.length);
-                var energies = _(windows).map(function(window) {
-                    var part = spec.slice(window[0], window[1]);
-                    //part = _.map(part, function(val) { return val * val});
+            var createFilters = _.memoize(function(size) {
+                var f = freq2bins(size);
+                var filters = [];
+                for (var m = 1; m < f.length-1; m++) {
+                    var filter = [];
+                    filters[m-1] = {filter: filter, start: f[m-1], end: f[m+1]};
+                    for (var k = 0; k< size; k++) {
+                        if ( f[m-1] <= k && k <=f[m]) {
+                            filter[k-f[m-1]] = (k-f[m-1])/(f[m] - f[m-1])
+                        }
+                        else if (f[m] <= k && k<=f[m+1]) {
+                            filter[k-f[m-1]] = (f[m+1]-k)/(f[m+1]-f[m])
+                        }
+                    }
+                }
 
-                    //var val = math.log(math.sum(self.applyWindow(self.triangularWindow, part))+0.1);
+                return filters;
+            });
 
-                    //return val;
-                    return math.sum(part)/part.length || 0;
+            return function(freq) {
+                var filters = createFilters(freq.length);
+                var energies = _(filters).map(function(filter) {
+
+                    return math.sum(dspHelpers.applyFilter(freq.slice(filter.start, filter.end), filter.filter))
                 });
 
                 return energies;
-                //return self.DCT2(energies);
+            };
+        })(),
+        BFCC: (function() {
+
+            var freqTable = [20, 60, 150, 250, 350, 450, 570, 700, 840, 1000, 1170, 1370, 1600, 1850, 2150, 2500, 2900, 3400, 4000, 4800, 5800, 7000, 8500, 10500, 13500];
+
+            var freq2bins = _.memoize(function(size) {
+                var binFreqWidth = (size)/audioCtx.sampleRate;
+
+                var bins = _.map(freqTable, function(val) {
+                    return Math.floor(val*binFreqWidth);
+                });
+
+                return bins;
+            });
+
+            var createFilters = _.memoize(function(size) {
+                var f = freq2bins(size);
+                var filters = [];
+                for (var m = 1; m < f.length-1; m++) {
+                    var filter = [];
+                    filters[m-1] = {filter: filter, start: f[m-1], end: f[m+1]};
+                    for (var k = 0; k< size; k++) {
+                        if ( f[m-1] <= k && k <=f[m]) {
+                            filter[k-f[m-1]] = (k-f[m-1])/(f[m] - f[m-1])
+                        }
+                        else if (f[m] <= k && k<=f[m+1]) {
+                            filter[k-f[m-1]] = (f[m+1]-k)/(f[m+1]-f[m])
+                        }
+                    }
+                }
+
+                return filters;
+            });
+
+            return function(freq) {
+                var filters = createFilters(freq.length);
+                var energies = _(filters).map(function(filter) {
+
+                    return math.sum(dspHelpers.applyFilter(freq.slice(filter.start, filter.end), filter.filter))
+                });
+
+                return energies;
             };
         })(),
         cutMinVal: function(array) {
@@ -199,7 +245,6 @@ var dspHelpers = (function() {
             return math.divide(array, diff);
         }
     };
-    var audioCtx = self.audioCtx;
 
     return self;
 })();

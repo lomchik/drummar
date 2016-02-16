@@ -1,4 +1,4 @@
-    var OnsetDetector = function(minValue) {
+var OnsetDetector = function(minValue) {
     this.ddf = [];
     this.minValue = minValue;
     this.reset();

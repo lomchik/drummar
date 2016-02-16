@@ -60,6 +60,7 @@
             <md-option ng-value="val" ng-repeat="val in repeatVariants">{{val}}</md-option>
         </md-select>
         <md-button class="md-raised md-primary" ng-click="gatherLearnData(drumType, repeatTimes)">Learn</md-button>
+        <md-button class="md-raised md-primary" ng-click="test(repeatTimes)">Test all</md-button>
     </section>
 </div>
 
@@ -78,6 +79,7 @@
 <script src="bower_components/underscore/underscore.js"></script>
 <script src="bower_components/mathjs/dist/math.js"></script>
 <script src="node_modules/midifile/dist/MIDIFile.js"></script>
+<script src="node_modules/synaptic/dist/synaptic.min.js"></script>
 
 
 <!-- Below is your custom library scripts -->
