@@ -1,6 +1,7 @@
 angular.module('sound', ['ngFileSaver']).controller('SoundPlayerController', function($scope, myOnsetDetection, audioInput, soundLoader,
-                                                                     audioCtx, offlineAudionCtx, midiParser, soundDrumDetector, $http,
+                                                                     audioCtx, offlineAudionCtx, midiParser, soundDrumNNDetector, $http,
                                                                      FileSaver, Blob, hmmData) {
+    soundDrumDetector = soundDrumNNDetector;
     var onsetDetection = myOnsetDetection(2048, new SparedOnsetDetector(14000), 0.75);
 
     $scope.onsetDetection = onsetDetection;
@@ -178,14 +179,22 @@ angular.module('sound', ['ngFileSaver']).controller('SoundPlayerController', fun
         })
     };
 
+    $scope.learnDetector = function(types) {
+        var groupedData = {};
 
-    _.each($scope.drumTypes, function(type) {
-        if (type.length > 2 && type != 'bd,hh') return;
-        hmmData.load(type  + '-learn-data.json').success(function(data) {
-            console.log('downloaded '+ type + ' onsets: ' + data.length)
-            soundDrumDetector.learn(type, data);
+        _.each(types, function(type) {
+            if (type.length > 2 && type != 'bd,hh') return;
+                hmmData.load(type  + '-learn-data.json').success(function(data) {
+                console.log('downloaded '+ type + ' onsets: ' + data.length)
+                groupedData[type] = data;
+                if (_.size(groupedData) == types.length) {
+                    soundDrumDetector.learn(groupedData);
+                }
+            });
         });
-    });
+    };
+
+    $scope.learnDetector(['bd', 'hh', 'sd', 'bd,hh']);
 
 
     audioInput.then(function(input) {

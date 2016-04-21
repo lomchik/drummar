@@ -9,7 +9,9 @@
     "body-parser": "~1.14.2",
     "multer": "~1.1.0",
     "moment": "~2.11.1",
-    "synaptic": "~1.0.2"
+    "synaptic": "~1.0.2",
+    "gulp": "~3.9.1",
+    "gulp-less": "~3.0.5"
   },
   "devDependencies": {
     "karma": "~0.13.15",
@@ -23,7 +25,12 @@
     "karma-sinon-chai": "~1.1.0",
     "karma-firefox-launcher": "~0.1.7",
     "concat-files": "~0.1.0",
-    "replace": "~0.3.0"
+    "replace": "~0.3.0",
+    "underscore": "~1.8.3",
+    "mathjs": "~2.7.0",
+    "moment": "~2.11.2",
+    "gulp-watch": "~4.3.5",
+    "gulp": "~3.9.1"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

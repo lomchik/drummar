@@ -1,0 +1,101 @@
+/* || General layout rules for narrow screens */
+@bg-color: #455A64;
+
+.disabled {
+	opacity: 0.2;
+}
+
+.no-margin {
+	margin: 0;
+}
+.clearfix {
+	&:after {
+		content:"";
+		display:block;
+		clear:both;
+	}
+}
+
+
+.button-control {
+	background  : none;
+	border: none;
+	outline: none;
+	box-shadow: none;
+	padding: 0;
+}
+
+html {
+	font-size: 16px;
+}
+
+body {
+	background: @bg-color;
+	overflow: hidden;
+}
+
+.wrapper {
+	position: absolute;
+	width: 100%;
+	max-width: 135vh;
+	margin-left: 50%;
+	margin-top: auto;
+	transform: translate(-50%, 0);
+	bottom:0;
+}
+
+.play-field {
+	position: relative;
+	max-height: ~"calc(100% - 150px)";
+	.play-field__stage {
+	}
+	.play-field__bg {
+		width: 100%;
+	}
+	.play-field__instruments {
+		img {
+			width: calc(100% / 8);
+		}
+	}
+}
+.legend {
+	text-align: center;
+	width: 50%;
+	margin: 5% auto;
+	vertical-align: middle;
+	.legend__item {
+		width: 17%;
+		display: inline-block;
+		img {
+			height: 50%;
+			width: 80%;
+		}
+	}
+}
+.tempo-controls {
+	width: 6%;
+	min-width: 25px;
+	position: absolute;
+	top: 8%;
+	text-align: center;
+	height: 40%;
+	left: 3%;
+	color: white;
+	span {
+	}
+	img {
+		width: 100%;
+	}
+	button {
+		&:first-of-type {
+			margin-bottom: 60%;
+		}
+		&:last-of-type {
+			margin-top: 60%;
+		}
+	}
+	small {
+		font-size: 60%;
+	}
+
+}

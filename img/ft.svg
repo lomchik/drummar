@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="166px" height="258px" viewBox="0 0 166 258" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:sketch="http://www.bohemiancoding.com/sketch/ns">
+    <!-- Generator: sketchtool 3.5.2 (25235) - http://www.bohemiancoding.com/sketch -->
+    <title>ft</title>
+    <desc>Created with sketchtool.</desc>
+    <defs>
+        <ellipse id="path-1" cx="73" cy="19" rx="73" ry="19"></ellipse>
+        <path d="M82,0 C42.5066,0 0,8.48137287 0,27.52 L0,139.565714 C0,157.732592 42.5066,172 82,172 C121.491,172 164,157.732592 164,139.565714 L164,27.52 C164,8.48137287 121.491,0 82,0 L82,0 Z M134.867133,36.8285714 C121.16142,41.3702497 102.220669,43.8285714 82.5034965,43.8285714 C61.786299,43.8285714 42.8431239,41.3702497 29.1328671,36.8285714 C13.3209175,32.0834788 10,26.861547 10,25.8285714 C10,24.7975977 13.3209175,19.574665 29.1328671,14.8285714 C42.8431239,10.2838903 61.786299,7.82857143 82.5034965,7.82857143 C102.220669,7.82857143 121.16142,10.2838903 134.867133,14.8285714 C150.681809,19.5726631 154,24.7955958 154,25.8285714 C154,26.861547 150.683829,32.0834788 134.867133,36.8285714 L134.867133,36.8285714 Z" id="path-3"></path>
+        <rect id="path-5" x="0" y="0" width="12" height="20" rx="8"></rect>
+        <rect id="path-7" x="0" y="0" width="12" height="20" rx="8"></rect>
+    </defs>
+    <g id="Welcome" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" sketch:type="MSPage">
+        <g id="Drummar-1" sketch:type="MSArtboardGroup" transform="translate(-1035.000000, -702.000000)">
+            <g id="drums" sketch:type="MSLayerGroup" transform="translate(29.000000, 667.000000)">
+                <g id="ft" transform="translate(1006.000000, 35.000000)">
+                    <path d="M99,225.984741 C99,218.362345 95,210.622396 95,203 L95,78.9997529 C95,77.8953199 95.8877296,77 97,77 L97,77 C98.1045695,77 99,77.9029929 99,78.9997529 L99,203 C99,210.725911 103,218.25883 103,225.984741 L103,229.000178 C103,230.104649 102.11227,231 101,231 L101,231 C99.8954305,231 99,230.104543 99,228.998274 L99,225.984741 Z" id="Rectangle-40" fill="#90A4AE" sketch:type="MSShapeGroup"></path>
+                    <g id="Ft" transform="translate(1.000000, 1.000000)">
+                        <g id="Head" transform="translate(9.000000, 7.000000)">
+                            <mask id="mask-2" sketch:name="Mask" fill="white">
+                                <use xlink:href="#path-1"></use>
+                            </mask>
+                            <use id="Mask" fill="#FFFFFF" sketch:type="MSShapeGroup" xlink:href="#path-1"></use>
+                            <rect id="Rectangle-6" fill="#F5F5F5" sketch:type="MSShapeGroup" mask="url(#mask-2)" x="0" y="0" width="73" height="38"></rect>
+                        </g>
+                        <g id="Shell">
+                            <mask id="mask-4" sketch:name="Mask" fill="white">
+                                <use xlink:href="#path-3"></use>
+                            </mask>
+                            <use id="Mask" fill="#009688" sketch:type="MSShapeGroup" xlink:href="#path-3"></use>
+                            <rect id="Rectangle-1" fill="#00897B" sketch:type="MSShapeGroup" mask="url(#mask-4)" x="0" y="0" width="82" height="172"></rect>
+                        </g>
+                    </g>
+                    <path d="M153,251.984741 C153,244.362345 141,236.622396 141,229 L141,104.999753 C141,103.89532 141.88773,103 143,103 L143,103 C144.104569,103 145,103.902993 145,104.999753 L145,229 C145,236.725911 157,244.25883 157,251.984741 L157,255.000178 C157,256.104649 156.11227,257 155,257 L155,257 C153.895431,257 153,256.104543 153,254.998274 L153,251.984741 Z" id="Rectangle-40" fill="#CFD8DC" sketch:type="MSShapeGroup"></path>
+                    <path d="M21,251.984741 C21,244.362345 9,236.622396 9,229 L9,104.999753 C9,103.89532 9.88772964,103 11,103 L11,103 C12.1045695,103 13,103.902993 13,104.999753 L13,229 C13,236.725911 25,244.25883 25,251.984741 L25,255.000178 C25,256.104649 24.1122704,257 23,257 L23,257 C21.8954305,257 21,256.104543 21,254.998274 L21,251.984741 Z" id="Rectangle-40" fill="#B0BEC5" sketch:type="MSShapeGroup" transform="translate(17.000000, 180.000000) scale(-1, 1) translate(-17.000000, -180.000000) "></path>
+                    <g id="Rectangle" transform="translate(17.000000, 122.000000)">
+                        <mask id="mask-6" sketch:name="Mask" fill="white">
+                            <use xlink:href="#path-5"></use>
+                        </mask>
+                        <use id="Mask" fill="#00796B" sketch:type="MSShapeGroup" xlink:href="#path-5"></use>
+                        <rect id="Rectangle-45" fill="#00695C" sketch:type="MSShapeGroup" mask="url(#mask-6)" x="0" y="0" width="6" height="20"></rect>
+                    </g>
+                    <g id="Rectangle" transform="translate(137.000000, 123.000000)">
+                        <mask id="mask-8" sketch:name="Mask" fill="white">
+                            <use xlink:href="#path-7"></use>
+                        </mask>
+                        <use id="Mask" fill="#00897B" sketch:type="MSShapeGroup" xlink:href="#path-7"></use>
+                        <rect id="Rectangle-45" fill="#00796B" sketch:type="MSShapeGroup" mask="url(#mask-8)" x="0" y="0" width="6" height="20"></rect>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

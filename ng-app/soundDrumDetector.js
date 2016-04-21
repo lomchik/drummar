@@ -27,29 +27,22 @@ angular.module('sound')
 
         return {
             types: types,
-            learn: function(type, freqs) {
-                var data = _(freqs).map(prepareFreqData);
-                var model = models[type];
-                if (!model) {
-                    var model = models[type] = new ModelMaker();//new HMM();
-                }
-                model.learn(data);
-                model.approximate();
-                //model.initialize(data, data[0].length);
-                //console.log(model.emissionProbability);
-                /*console.log(type, _.map(model.emissionProbability, function(values) {
-                    return _.size(values);
-                }).join(' '));*/
-                /*console.log(type, _.map(model.probabilities, function(values) {
-                    return _.size(values);
-                }).join(' '));*/
+            learn: function(types) {
+                _.each(types, function(freqs, type) {
+                    var data = _(freqs).map(prepareFreqData);
+                    var model = models[type];
+                    if (!model) {
+                        var model = models[type] = new ModelMaker();//new HMM();
+                    }
+                    model.learn(data);
+                    model.approximate();
+                });
             },
             detect: function(data) {
                 var probabilities = {},
                     max = 0,
                     detectedType;
                 _(models).each(function(model, type) {
-                    //probabilities[type] = model.viterbiApproximation(prepareFreqData(data));
                     probabilities[type] = model.probability(prepareFreqData(data));
                     if (max < probabilities[type]) {
                         detectedType = type;

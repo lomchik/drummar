@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="80px" height="44px" viewBox="0 0 80 44" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:sketch="http://www.bohemiancoding.com/sketch/ns">
+    <!-- Generator: sketchtool 3.5.2 (25235) - http://www.bohemiancoding.com/sketch -->
+    <title>hh-right-hand-finish-1</title>
+    <desc>Created with sketchtool.</desc>
+    <defs>
+        <path id="path-1" d="M80,18.8 C80,25.8517831 62.09139,31.8 40,31.8 C17.90861,31.8 0,25.8517831 0,18.8 L0,0.8 L80,0.8 L80,18.8 L80,18.8 Z"></path>
+        <ellipse id="path-3" cx="40" cy="13" rx="40" ry="13"></ellipse>
+    </defs>
+    <g id="Welcome" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" sketch:type="MSPage">
+        <g id="Drummar-3" sketch:type="MSArtboardGroup" transform="translate(-264.000000, -551.000000)">
+            <g id="notes" sketch:type="MSLayerGroup" transform="translate(235.000000, 189.000000)">
+                <g id="finish" transform="translate(0.000000, 362.000000)">
+                    <g id="hh-right-hand-finish-1" transform="translate(29.000000, 0.000000)">
+                        <g id="Rectangle-230" transform="translate(0.000000, 12.200000)">
+                            <mask id="mask-2" sketch:name="Mask" fill="white">
+                                <use xlink:href="#path-1"></use>
+                            </mask>
+                            <use id="Mask" fill="#2196F3" sketch:type="MSShapeGroup" xlink:href="#path-1"></use>
+                            <path d="M-5,-1.2 L33,-1.2 L33,31.8 L-5,31.8 L-5,-1.2 Z" fill="#2979FF" sketch:type="MSShapeGroup" mask="url(#mask-2)"></path>
+                        </g>
+                        <g id="Rectangle-230">
+                            <mask id="mask-4" sketch:name="Mask" fill="white">
+                                <use xlink:href="#path-3"></use>
+                            </mask>
+                            <use id="Mask" fill="#90CAF9" sketch:type="MSShapeGroup" xlink:href="#path-3"></use>
+                            <path d="M-5,0 L47,0 L33,26 L-5,26 L-5,0 Z" fill="#42A5F5" sketch:type="MSShapeGroup" mask="url(#mask-4)"></path>
+                        </g>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

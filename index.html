@@ -16,7 +16,7 @@
 
     <link rel="stylesheet" href="bower_components/angular-material/angular-material.css">
     <link rel="stylesheet" href="bower_components/mdi/css/materialdesignicons.css">
-    <link rel="stylesheet" href="styles/app.css">
+    <link rel="stylesheet" href="styles/less/app.css">
 
 </head>
 <body>
@@ -40,7 +40,6 @@
     <div style="clear:both;"></div>
 
     <div ng-if="visualizationOn" style="overflow-x: auto; direction: rtl;">
-        dz
         <array-visualization data="onsetDetection.localMaximums"></array-visualization>
         <array-visualization data="onsetDetection.ddf"></array-visualization><!--
         mfcc
@@ -98,6 +97,7 @@
 <script src="ng-app/soundVisualizationDirective.js"></script>
 <script src="ng-app/midiParser.js"></script>
 <script src="ng-app/soundDrumDetector.js"></script>
+<script src="ng-app/soundDrumNNDetector.js"></script>
 
 </body>
 </html>

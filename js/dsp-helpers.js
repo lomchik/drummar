@@ -1,10 +1,15 @@
+if (typeof  require == 'function') {
+    _ = require('underscore');
+    math = require('mathjs')
+}
+
 var dspHelpers = (function() {
     var barkScale = [0, 20, 100, 200, 300, 400, 510, 630, 770, 920, 1080, 1270, 1480, 1720, 2000, 2320, 2700, 3150, 3700, 4400, 5300, 6400, 7700, 9500, 12000, 15500],
         freq2Bark = function(freq) {
             return 8.96 * Math.log(0.978 + 5 * Math.log(0.994 + Math.pow((freq + 75.4)/2173, 1.347)));
         };
 
-    var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    var audioCtx = typeof window != 'undefined' ? new (window.AudioContext || window.webkitAudioContext)() : {sampleRate: 44100};
     var self = {
         audioCtx: audioCtx,
         barkScale: barkScale,
@@ -248,3 +253,7 @@ var dspHelpers = (function() {
 
     return self;
 })();
+
+if (typeof module != 'undefined') {
+    module.exports = dspHelpers;
+}
