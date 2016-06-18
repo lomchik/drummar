@@ -1,0 +1,51 @@
+{
+  "name": "track1",
+  "description": "",
+  "events": [
+    {
+      "drum": "sd",
+      "time": 0,
+      "move": "rh"
+    },
+    {
+      "drum": "bd",
+      "time": 500,
+      "move": "rf"
+    },
+    {
+      "drum": "bd",
+      "time": 1000,
+      "move": "rf"
+    },
+    {
+      "drum": "hh",
+      "time": 1000,
+      "move": "rh"
+    },
+    {
+      "drum": "hh",
+      "time": 1200,
+      "move": "rh"
+    },
+    {
+      "drum": "sd",
+      "time": 1200,
+      "move": "lh"
+    },
+    {
+      "drum": "hh",
+      "time": 1500,
+      "move": "rh"
+    },
+    {
+      "drum": "hh",
+      "time": 2000,
+      "move": "rh"
+    },
+    {
+      "drum": "hh",
+      "time": 3200,
+      "move": "lh"
+    }
+  ]
+}

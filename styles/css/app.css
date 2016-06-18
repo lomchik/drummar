@@ -10,6 +10,15 @@
   display: block;
   clear: both;
 }
+svg text {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+svg text::selection {
+  background: none;
+}
 .button-control {
   background: none;
   border: none;
@@ -78,4 +87,86 @@ body {
 }
 .tempo-controls small {
   font-size: 60%;
+}
+.control {
+  cursor: pointer;
+  border: none;
+  outline: none;
+}
+.disabled {
+  opacity: 0.7;
+}
+.pusher #top {
+  transform: translateY(8px);
+}
+.pusher #body rect {
+  y: 8px;
+}
+.pusher.up #top {
+  transform: translateY(0);
+}
+.pusher.up #body rect {
+  y: 0;
+}
+@keyframes puck-hh {
+  0% {
+    transform: translate(465px, 187px) scale(0.5);
+    opacity: 1;
+  }
+  86.5% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(240px, 610px);
+    opacity: 0.1;
+  }
+}
+@keyframes puck-sd {
+  0% {
+    transform: translate(558px, 187px) scale(0.5);
+    opacity: 1;
+  }
+  86.5% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(413px, 610px);
+    opacity: 0.1;
+  }
+}
+@keyframes puck-bd {
+  0% {
+    transform: translate(652px, 187px) scale(0.5);
+    opacity: 1;
+  }
+  86.5% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(594px, 610px);
+    opacity: 0.1;
+  }
+}
+.puck {
+  opacity: 0;
+  animation-duration: 2s;
+  animation-timing-function: linear;
+}
+.puck.hh {
+  animation-name: puck-hh;
+}
+.puck.sd {
+  animation-name: puck-sd;
+}
+.puck.bd {
+  animation-name: puck-bd;
+}
+.puck .hide {
+  display: none;
+}
+#drums #c,
+#drums #tt-1-2,
+#drums #ft,
+#drums #r {
+  opacity: 0.1;
 }

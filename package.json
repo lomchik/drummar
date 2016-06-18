@@ -4,14 +4,15 @@
   "description": "",
   "main": "index.js",
   "dependencies": {
-    "midifile": "~1.0.1",
-    "express": "~4.13.3",
     "body-parser": "~1.14.2",
-    "multer": "~1.1.0",
-    "moment": "~2.11.1",
-    "synaptic": "~1.0.2",
+    "express": "~4.13.3",
     "gulp": "~3.9.1",
-    "gulp-less": "~3.0.5"
+    "gulp-exec": "^2.1.2",
+    "gulp-less": "~3.0.5",
+    "midifile": "~1.0.1",
+    "moment": "~2.11.1",
+    "multer": "~1.1.0",
+    "synaptic": "~1.0.2"
   },
   "devDependencies": {
     "karma": "~0.13.15",

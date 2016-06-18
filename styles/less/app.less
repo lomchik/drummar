@@ -16,6 +16,13 @@
 	}
 }
 
+svg text {
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+}
+svg text::selection { background: none; }
 
 .button-control {
 	background  : none;
@@ -98,4 +105,75 @@ body {
 		font-size: 60%;
 	}
 
+}
+
+.control {
+	cursor: pointer;
+	border: none;
+	outline: none;
+}
+
+.disabled {
+	opacity: 0.7;
+}
+
+.pusher {
+	@pusher-height: 8px;
+	#top {
+		transform: translateY(@pusher-height);
+	}
+	#body rect {
+		y: @pusher-height;
+	}
+	&.up {
+		#top {
+			transform: translateY(0);
+		}
+
+		#body rect {
+			y: 0;
+		}
+	}
+}
+
+@keyframes puck-hh {
+	0%	{transform: translate(465px, 187px) scale(0.5); opacity: 1}
+	86.5%	{opacity: 1}
+	100%{transform: translate(240px, 610px); opacity: 0.1;}
+}
+
+@keyframes puck-sd {
+	0%	{transform: translate(558px, 187px) scale(0.5); opacity: 1}
+	86.5%	{opacity: 1}
+	100%{transform: translate(413px, 610px); opacity: 0.1;}
+}
+
+@keyframes puck-bd {
+	0%	{transform: translate(652px, 187px) scale(0.5); opacity: 1}
+	86.5%	{opacity: 1}
+	100%{transform: translate(594px, 610px); opacity: 0.1;}
+}
+
+.puck {
+	opacity: 0;
+	&.hh {
+		animation-name: puck-hh;
+	}
+	&.sd {
+		animation-name: puck-sd;
+	}
+	&.bd {
+		animation-name: puck-bd;
+	}
+	.hide {
+		display: none;
+	}
+	animation-duration: 2s;
+	animation-timing-function: linear;
+}
+
+#drums {
+	#c, #tt-1-2, #ft, #r {
+		opacity: 0.1;
+	}
 }
